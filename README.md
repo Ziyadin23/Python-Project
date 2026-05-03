@@ -2,52 +2,53 @@
 
 ## Project Overview
 
-This project is a terminal-based Student Database System for the Introduction
-to Programming 2 final project. It manages rich student profiles, including
-contact information, academic status, grades, attendance, JSON storage, CSV
-exports, and reports.
+This project is a modern, terminal-based Student Database System for the Introduction
+to Programming 2 final project. It features a **User Friendly Interface** powered
+by the `rich` library and manages comprehensive student profiles, including
+contact information, academic status, grades, attendance, and reporting.
 
 The project is intentionally modular so each group member can own a clear part
 of the system while the final application still runs as one integrated program.
 
 ## How to Run
 
-```bash
-python main.py
-```
+1. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Run the unit tests with:
+2. Start the application:
+   ```bash
+   python main.py
+   ```
 
-```bash
-python -m unittest discover
-```
+3. Run the unit tests:
+   ```bash
+   python -m unittest discover
+   ```
 
 ## Main Features
 
-- Add, view, search, update, and delete student records.
-- Store numeric student ID, name, age, email, phone, major, 3-year bachelor
-  year level, and status.
-- Record grades and attendance.
-- Calculate average grade, GPA, and attendance percentage.
-- Filter students by status, major, year level, GPA range, and attendance risk.
-- Save and load records with JSON.
-- Export student summaries to CSV.
-- Generate basic and detailed reports.
-- Validate numeric student ID, email, phone, age, status, year level, and
-  grades.
-- Add regular student records directly from the CLI without asking for honor
-  student status.
-- Log important manager actions with a custom decorator.
+- **Modern Terminal UI**: Colorful and intuitive menus, panels, and tables using the `rich` library.
+- **Automatic Persistence**: Every change (add, update, delete, grades, attendance) is automatically saved to JSON.
+- **Full Student Management**: Add, view, search, update, and delete student records.
+- **Rich Student Profiles**: Store IDs, contact info, academic status, grades, and attendance.
+- **Analytics**: Calculate average grade, GPA, and attendance percentage.
+- **Advanced Filtering**: Filter by status, major, year level, GPA, and attendance risk.
+- **Data Export**: Export student summaries to CSV for external use.
+- **Polymorphic Reports**: Generate basic and detailed reports for any student.
+- **Robust Validation**: Regex-based validation for IDs, emails, and phone numbers.
+- **Activity Logging**: Custom `@log_action` decorator records all manager operations.
 
 ## Architecture and Class Hierarchy
 
 ```text
 main.py
-  -> student_database.cli
-      -> StudentManager
-          -> Student / HonorStudent
-          -> JSON and CSV storage
-          -> BasicReport / DetailedReport
+  -> student_database.cli (Rich UI layer)
+      -> StudentManager (Logic layer with Auto-Save)
+          -> Student / HonorStudent (Model layer)
+          -> JSON and CSV storage (Data layer)
+          -> BasicReport / DetailedReport (Reporting layer)
 ```
 
 Class hierarchy:
@@ -62,55 +63,33 @@ StudentReport
   -> DetailedReport
 ```
 
-Important modules:
-
-- `student_database.models`: `Person`, `Student`, `HonorStudent`, and object
-  conversion helpers.
-- `student_database.manager`: `StudentManager`, which associates and manages
-  all students.
-- `student_database.storage`: JSON and CSV file input/output.
-- `student_database.validation`: regex and value validation.
-- `student_database.reports`: polymorphic report classes.
-- `student_database.decorators`: custom `@log_action` decorator.
-- `student_database.cli`: menu system and user input/output.
-
 ## Logic Flow
 
 1. `main.py` starts the CLI.
-2. The CLI creates a `StudentManager`.
-3. Existing JSON data is loaded if available.
-4. The user chooses actions from the numbered menu.
-5. The manager validates numeric IDs and 1-3 bachelor year levels.
-6. Reports, CSV exports, and JSON saves are generated from manager data.
+2. The CLI creates a `StudentManager` and enables **Auto-Save**.
+3. Existing JSON data is loaded automatically from `data/data.json`.
+4. The user navigates using the numbered `rich` menu.
+5. All database modifications trigger an immediate `_auto_save()` to JSON.
+6. Reports and CSV exports can be generated on demand.
 7. Unit tests verify the most important system behavior.
+
+## Project Requirements Mapping
+
+For a detailed mapping of where specific rubric requirements (OOP, Functional Programming, Regex, etc.) are implemented in the code, please refer to the [REQUIREMENTS.md](./REQUIREMENTS.md) file.
 
 ## Rubric Coverage
 
-- **Foundation and Logic:** numbered menus, conditionals, loops, and robust
-  input handling.
-- **Collections:** dictionaries for students, lists for grades and attendance,
-  sets for unique majors, and tuples for allowed statuses/year levels.
-- **Data Persistence:** `os`, `json`, and `csv` modules are used.
+- **Foundation and Logic:** numbered menus, conditionals, loops, and robust input handling via `rich.prompt`.
+- **Collections:** dictionaries for storage, lists for grades, sets for unique majors, and tuples for validation.
+- **Data Persistence:** `json` (automated) and `csv` (manual export) modules.
 - **OOP:** inheritance, encapsulation, association, and polymorphism.
-- **Functions:** clear reusable functions with positional and keyword
-  arguments.
-- **Functional Programming:** `lambda`, `map`, and `filter` are used in manager
-  and report logic.
-- **Modules and Packages:** organized package with `__init__.py` and imports.
-- **Testing:** more than five `unittest` tests are included.
+- **Functional Programming:** `lambda`, `map`, and `filter` used for searching and statistics.
+- **Modules and Packages:** cleanly organized package structure with `__init__.py`.
+- **Testing:** 11 comprehensive unit tests included.
 - **Decorators:** `@log_action` records manager activity.
-- **Iterators/Generators:** `iter_students_by_status()` and
-  `students_at_risk()` generate student records.
-- **Regex:** validation uses the `re` module.
-
-## Team Contributions
-
-- **Member 1:** models, validation, and class hierarchy.
-- **Member 2:** student manager, storage, decorators, and generators.
-- **Member 3:** CLI, reports, tests, README, and final integration.
+- **Iterators/Generators:** Generator functions for filtering students.
+- **Regex:** `re` module used for input validation.
 
 ## Quality Assurance
 
-The code uses docstrings, clear module boundaries, validation, exception
-handling, and unit tests. It uses only the Python standard library, so no
-external dependencies are required.
+The code uses docstrings, clear module boundaries, strict validation, and automated unit tests to ensure high-quality software standards.
