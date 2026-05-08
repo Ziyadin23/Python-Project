@@ -30,8 +30,8 @@ of the system while the final application still runs as one integrated program.
 ## Main Features
 
 - **Modern Terminal UI**: Colorful and intuitive menus, panels, and tables using the `rich` library.
-- **Automatic Persistence**: Every change (add, update, delete, grades, attendance) is automatically saved to JSON.
-- **Full Student Management**: Add, view, search, update, and delete student records.
+- **Robust Auto-Save**: Every change is automatically saved to JSON, with fail-safes to prevent data corruption.
+- **Full Student Management**: Add, view, search, and selectively update specific student records.
 - **Rich Student Profiles**: Store IDs, contact info, academic status, grades, and attendance.
 - **Analytics**: Calculate average grade, GPA, and attendance percentage.
 - **Advanced Filtering**: Filter by status, major, year level, GPA, and attendance risk.
@@ -67,7 +67,7 @@ StudentReport
 
 1. `main.py` starts the CLI.
 2. The CLI creates a `StudentManager` and enables **Auto-Save**.
-3. Existing JSON data is loaded automatically from `data/data.json`.
+3. Existing JSON data is loaded automatically from `data/students.json`.
 4. The user navigates using the numbered `rich` menu.
 5. All database modifications trigger an immediate `_auto_save()` to JSON.
 6. Reports and CSV exports can be generated on demand.
