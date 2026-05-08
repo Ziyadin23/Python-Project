@@ -31,9 +31,13 @@ class StudentManager:
             self.add_student(student)
 
     def _auto_save(self) -> None:
-        """Save to JSON if a data path is configured."""
+        """Save to JSON if a data path is configured, reverting on failure."""
         if self.data_path:
-            self.save_json(self.data_path)
+            try:
+                self.save_json(self.data_path)
+            except OSError as error:
+                self.load_json(self.data_path)
+                raise RuntimeError(f"Auto-save failed. Changes reverted. ({error})") from error
 
     def __len__(self) -> int:
         return len(self._students)

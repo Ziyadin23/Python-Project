@@ -106,16 +106,37 @@ def add_student_flow(manager: StudentManager) -> None:
         )
         manager.add_student(student)
         console.print("[green]Student added successfully.[/green]")
-    except (KeyError, ValueError) as error:
+    except (KeyError, ValueError, RuntimeError) as error:
         console.print(f"[red]Could not add student: {error}[/red]")
 
 
 def view_all_flow(manager: StudentManager) -> None:
     print_header("ALL STUDENTS")
-    display_students(manager.all_students())
-    majors = sorted(manager.unique_majors())
-    if majors:
-        console.print(f"\n[bold]Unique majors:[/bold] {', '.join(majors)}")
+    console.print("1. [bold]No Filter (View All)[/bold]")
+    console.print("2. [bold]Filter by Major[/bold]")
+    console.print("3. [bold]Filter by Year Level[/bold]")
+    console.print("4. [bold]Filter by Status[/bold]")
+    choice = Prompt.ask("Choose an option", choices=["1", "2", "3", "4"])
+
+    if choice == "1":
+        display_students(manager.all_students())
+        majors = sorted(manager.unique_majors())
+        if majors:
+            console.print(f"\n[bold]Unique majors:[/bold] {', '.join(majors)}")
+    elif choice == "2":
+        majors = sorted(manager.unique_majors())
+        if not majors:
+            console.print("[yellow]No majors found.[/yellow]")
+            return
+        console.print(f"[dim]Available majors: {', '.join(majors)}[/dim]")
+        major = prompt_required("Major")
+        display_students(manager.filter_by_major(major))
+    elif choice == "3":
+        year = prompt_int("Year Level")
+        display_students(manager.filter_by_year_level(year))
+    elif choice == "4":
+        status = prompt_choice("Status", ALLOWED_STATUSES)
+        display_students(manager.filter_by_status(status))
 
 
 def search_flow(manager: StudentManager) -> None:
@@ -129,27 +150,53 @@ def update_student_flow(manager: StudentManager) -> None:
     student_id = prompt_required("Student ID")
     try:
         student = manager.get_student(student_id)
-        console.print("[dim]Leave a field blank to keep the current value.[/dim]")
-        fields = {
-            "name": Prompt.ask(f"Name", default=student.name).strip(),
-            "age": Prompt.ask(f"Age", default=str(student.age)).strip(),
-            "email": Prompt.ask(f"Email", default=student.email).strip(),
-            "phone": Prompt.ask(f"Phone", default=student.phone).strip(),
-            "major": Prompt.ask(f"Major", default=student.major).strip(),
-            "year_level": Prompt.ask(
-                f"Year level",
-                default=str(student.year_level),
-                choices=tuple(map(str, YEAR_LEVELS)),
-            ).strip(),
-            "status": Prompt.ask(
-                f"Status",
-                default=student.status,
-                choices=ALLOWED_STATUSES,
-            ).strip(),
-        }
-        manager.update_student(student_id, **fields)
-        console.print("[green]Student updated successfully.[/green]")
-    except (KeyError, ValueError) as error:
+        fields_to_update = {}
+        while True:
+            console.print("\n[bold]Select a field to update:[/bold]")
+            console.print("1. Name")
+            console.print("2. Age")
+            console.print("3. Email")
+            console.print("4. Phone")
+            console.print("5. Major")
+            console.print("6. Year level")
+            console.print("7. Status")
+            console.print("8. Apply Updates")
+            console.print("9. Cancel")
+            choice = Prompt.ask("Choose an option", choices=[str(i) for i in range(1, 10)])
+            
+            if choice == "1":
+                fields_to_update["name"] = Prompt.ask("New Name", default=student.name).strip()
+            elif choice == "2":
+                fields_to_update["age"] = Prompt.ask("New Age", default=str(student.age)).strip()
+            elif choice == "3":
+                fields_to_update["email"] = Prompt.ask("New Email", default=student.email).strip()
+            elif choice == "4":
+                fields_to_update["phone"] = Prompt.ask("New Phone", default=student.phone).strip()
+            elif choice == "5":
+                fields_to_update["major"] = Prompt.ask("New Major", default=student.major).strip()
+            elif choice == "6":
+                fields_to_update["year_level"] = Prompt.ask(
+                    "New Year level",
+                    default=str(student.year_level),
+                    choices=tuple(map(str, YEAR_LEVELS)),
+                ).strip()
+            elif choice == "7":
+                fields_to_update["status"] = Prompt.ask(
+                    "New Status",
+                    default=student.status,
+                    choices=ALLOWED_STATUSES,
+                ).strip()
+            elif choice == "8":
+                if fields_to_update:
+                    manager.update_student(student_id, **fields_to_update)
+                    console.print("[green]Student updated successfully.[/green]")
+                else:
+                    console.print("[yellow]No changes made.[/yellow]")
+                break
+            elif choice == "9":
+                console.print("[yellow]Update cancelled.[/yellow]")
+                break
+    except (KeyError, ValueError, RuntimeError) as error:
         console.print(f"[red]Could not update student: {error}[/red]")
 
 
@@ -161,7 +208,7 @@ def delete_student_flow(manager: StudentManager) -> None:
         if prompt_yes_no(f"Delete {student.name}?"):
             manager.delete_student(student_id)
             console.print("[green]Student deleted successfully.[/green]")
-    except (KeyError, ValueError) as error:
+    except (KeyError, ValueError, RuntimeError) as error:
         console.print(f"[red]Could not delete student: {error}[/red]")
 
 
@@ -190,7 +237,7 @@ def grades_attendance_flow(manager: StudentManager) -> None:
                 pause()
             elif choice == "3":
                 return
-        except (KeyError, ValueError) as error:
+        except (KeyError, ValueError, RuntimeError) as error:
             console.print(f"[red]Operation failed: {error}[/red]")
             pause()
 
