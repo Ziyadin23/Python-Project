@@ -6,13 +6,17 @@ from typing import Iterable
 
 from student_database.constants import DEFAULT_LOG_PATH
 from student_database.decorators import log_action
-from student_database.models import Student
+from student_database.models import Parent, Student
 from student_database.storage import (
     export_students_csv,
     load_students_json,
     save_students_json,
 )
-from student_database.validation import validate_status, validate_student_id
+from student_database.validation import (
+    validate_relationship,
+    validate_status,
+    validate_student_id,
+)
 
 
 class StudentManager:
@@ -111,6 +115,32 @@ class StudentManager:
         self._auto_save()
         return result
 
+    @log_action("Added parent")
+    def add_parent(
+        self,
+        student_id: str,
+        name: str,
+        email: str,
+        phone: str,
+        relationship: str,
+    ) -> Parent:
+        """Add a parent or guardian record to a student."""
+        parent = self.get_student(student_id).add_parent(
+            name=name,
+            email=email,
+            phone=phone,
+            relationship=relationship,
+        )
+        self._auto_save()
+        return parent
+
+    @log_action("Removed parent")
+    def remove_parent(self, student_id: str, index: int) -> Parent:
+        """Remove a parent or guardian record from a student."""
+        parent = self.get_student(student_id).remove_parent(index)
+        self._auto_save()
+        return parent
+
     def get_student(self, student_id: str) -> Student:
         """Return one student by ID."""
         normalized_id = validate_student_id(student_id)
@@ -192,6 +222,36 @@ class StudentManager:
         for student in self.all_students():
             if student.attendance and student.attendance_percentage() < minimum_attendance:
                 yield student
+
+    def iter_parents(self):
+        """Generate parents across all students."""
+        for student in self.all_students():
+            for parent in student.iter_parents():
+                yield parent
+
+    def unique_parent_relationships(self) -> set[str]:
+        """Return a set of unique parent relationships."""
+        relationships = map(lambda parent: parent.relationship, self.iter_parents())
+        return set(relationships)
+
+    def parent_summary_tuple(self, student_id: str) -> tuple[tuple[str, str, str, str], ...]:
+        """Return parent summary rows as a tuple of tuples."""
+        student = self.get_student(student_id)
+        return tuple(map(lambda parent: parent.summary_row(), student.parents))
+
+    def parent_phone_map(self) -> dict[str, str]:
+        """Return a name-to-phone map for parents."""
+        pairs = map(lambda parent: (parent.name, parent.phone), self.iter_parents())
+        return dict(pairs)
+
+    def filter_parents_by_relationship(self, relationship: str) -> list[Parent]:
+        """Filter parents by relationship type."""
+        normalized = validate_relationship(relationship)
+        matches = filter(
+            lambda parent: parent.relationship == normalized,
+            self.iter_parents(),
+        )
+        return list(matches)
 
     def student_gpa_map(self) -> dict[str, float]:
         """Return student IDs mapped to GPA values using map."""

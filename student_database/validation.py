@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from student_database.constants import ALLOWED_STATUSES, YEAR_LEVELS
+from student_database.constants import (
+    ALLOWED_PARENT_RELATIONSHIPS,
+    ALLOWED_STATUSES,
+    YEAR_LEVELS,
+)
 
 STUDENT_ID_RE = re.compile(r"^\d+$")
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
@@ -85,6 +89,16 @@ def validate_status(status: str) -> str:
             return allowed_status
     allowed = ", ".join(ALLOWED_STATUSES)
     raise ValueError(f"Status must be one of: {allowed}.")
+
+
+def validate_relationship(relationship: str) -> str:
+    """Validate and normalize a parent relationship."""
+    value = str(relationship).strip().lower()
+    for allowed_relation in ALLOWED_PARENT_RELATIONSHIPS:
+        if value == allowed_relation.lower():
+            return allowed_relation
+    allowed = ", ".join(ALLOWED_PARENT_RELATIONSHIPS)
+    raise ValueError(f"Relationship must be one of: {allowed}.")
 
 
 def validate_grade(score: float | int | str) -> float:

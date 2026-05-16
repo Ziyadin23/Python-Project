@@ -12,6 +12,7 @@ from student_database.validation import (
     validate_major,
     validate_name,
     validate_phone,
+    validate_relationship,
     validate_status,
     validate_student_id,
     validate_year_level,
@@ -60,6 +61,61 @@ class Person:
         self._phone = validate_phone(value)
 
 
+class Parent:
+    """Parent or guardian contact information."""
+
+    def __init__(self, name: str, email: str, phone: str, relationship: str) -> None:
+        self._name = validate_name(name)
+        self._email = validate_email(email)
+        self._phone = validate_phone(phone)
+        self._relationship = validate_relationship(relationship)
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self._name = validate_name(value)
+
+    @property
+    def email(self) -> str:
+        return self._email
+
+    @email.setter
+    def email(self, value: str) -> None:
+        self._email = validate_email(value)
+
+    @property
+    def phone(self) -> str:
+        return self._phone
+
+    @phone.setter
+    def phone(self, value: str) -> None:
+        self._phone = validate_phone(value)
+
+    @property
+    def relationship(self) -> str:
+        return self._relationship
+
+    @relationship.setter
+    def relationship(self, value: str) -> None:
+        self._relationship = validate_relationship(value)
+
+    def summary_row(self) -> tuple[str, str, str, str]:
+        """Return a tuple suitable for display."""
+        return (self.name, self.relationship, self.email, self.phone)
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert the parent to a JSON-friendly dictionary."""
+        return {
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "relationship": self.relationship,
+        }
+
+
 class Student(Person):
     """A student record with grades and attendance data."""
 
@@ -75,6 +131,7 @@ class Student(Person):
         status: str = "Active",
         grades: list[float] | None = None,
         attendance: list[dict[str, object]] | None = None,
+        parents: list[Parent] | list[dict[str, object]] | None = None,
     ) -> None:
         super().__init__(name=name, age=age, email=email, phone=phone)
         self._student_id = validate_student_id(student_id)
@@ -83,6 +140,7 @@ class Student(Person):
         self._status = validate_status(status)
         self._grades: list[float] = []
         self._attendance: list[dict[str, object]] = []
+        self._parents: list[Parent] = []
 
         for grade in grades or []:
             self.add_grade(grade)
@@ -91,6 +149,18 @@ class Student(Person):
                 record.get("present", False),
                 record.get("date"),
             )
+        for parent in parents or []:
+            if isinstance(parent, Parent):
+                self._parents.append(parent)
+            elif isinstance(parent, dict):
+                self.add_parent(
+                    str(parent.get("name") or ""),
+                    str(parent.get("email") or ""),
+                    str(parent.get("phone") or ""),
+                    str(parent.get("relationship") or ""),
+                )
+            else:
+                raise ValueError("Parent entries must be Parent objects or dicts.")
 
     @property
     def student_id(self) -> str:
@@ -128,6 +198,10 @@ class Student(Person):
     def attendance(self) -> list[dict[str, object]]:
         return [record.copy() for record in self._attendance]
 
+    @property
+    def parents(self) -> tuple[Parent, ...]:
+        return tuple(self._parents)
+
     def add_grade(self, score: float | int | str) -> float:
         """Add a validated grade and return the stored score."""
         grade = validate_grade(score)
@@ -146,6 +220,29 @@ class Student(Person):
         }
         self._attendance.append(record)
         return record.copy()
+
+    def add_parent(
+        self,
+        name: str,
+        email: str,
+        phone: str,
+        relationship: str,
+    ) -> Parent:
+        """Add a parent or guardian record."""
+        parent = Parent(name=name, email=email, phone=phone, relationship=relationship)
+        self._parents.append(parent)
+        return parent
+
+    def remove_parent(self, index: int) -> Parent:
+        """Remove a parent by index and return it."""
+        if index < 0 or index >= len(self._parents):
+            raise ValueError("Parent selection is out of range.")
+        return self._parents.pop(index)
+
+    def iter_parents(self):
+        """Generate parents attached to the student."""
+        for parent in self._parents:
+            yield parent
 
     def average_grade(self) -> float:
         """Return the average grade from 0 to 100."""
@@ -193,6 +290,7 @@ class Student(Person):
             "status": self.status,
             "grades": self.grades,
             "attendance": self.attendance,
+            "parents": [parent.to_dict() for parent in self._parents],
         }
 
 
@@ -212,6 +310,7 @@ class HonorStudent(Student):
         grades: list[float] | None = None,
         attendance: list[dict[str, object]] | None = None,
         scholarship_level: str = "Merit",
+        parents: list[Parent] | list[dict[str, object]] | None = None,
     ) -> None:
         super().__init__(
             student_id=student_id,
@@ -224,6 +323,7 @@ class HonorStudent(Student):
             status=status,
             grades=grades,
             attendance=attendance,
+            parents=parents,
         )
         self.scholarship_level = scholarship_level.strip() or "Merit"
 
@@ -261,6 +361,7 @@ def student_from_dict(data: dict[str, object]) -> Student:
         "status": str(data.get("status", "Active")),
         "grades": list(data.get("grades", [])),
         "attendance": list(data.get("attendance", [])),
+        "parents": list(data.get("parents", [])),
     }
 
     if student_type == "HonorStudent":

@@ -9,12 +9,13 @@ from rich.table import Table
 
 from student_database.constants import (
     ALLOWED_STATUSES,
+    ALLOWED_PARENT_RELATIONSHIPS,
     DEFAULT_DATA_PATH,
     DEFAULT_EXPORT_PATH,
     YEAR_LEVELS,
 )
 from student_database.manager import StudentManager
-from student_database.models import Student
+from student_database.models import Parent, Student
 from student_database.reports import BasicReport, DetailedReport
 
 console = Console()
@@ -86,6 +87,25 @@ def display_students(students: list[Student]) -> None:
     console.print(table)
 
 
+def display_parents(parents: list[Parent] | tuple[Parent, ...]) -> None:
+    if not parents:
+        console.print("[yellow]No parents found.[/yellow]")
+        return
+
+    table = Table(title="Parent Contacts")
+    table.add_column("#", justify="right", style="cyan")
+    table.add_column("Name", style="magenta")
+    table.add_column("Relationship", style="green")
+    table.add_column("Email", style="blue")
+    table.add_column("Phone", style="yellow")
+
+    for index, parent in enumerate(parents, start=1):
+        name, relationship, email, phone = parent.summary_row()
+        table.add_row(str(index), name, relationship, email, phone)
+
+    console.print(table)
+
+
 def add_student_flow(manager: StudentManager) -> None:
     print_header("ADD NEW STUDENT")
     try:
@@ -104,6 +124,16 @@ def add_student_flow(manager: StudentManager) -> None:
             ),
             status=prompt_choice("Status", ALLOWED_STATUSES),
         )
+        while prompt_yes_no("Add a parent or guardian"):
+            student.add_parent(
+                name=prompt_required("Parent Name"),
+                relationship=prompt_choice(
+                    "Relationship",
+                    ALLOWED_PARENT_RELATIONSHIPS,
+                ),
+                email=prompt_required("Parent Email"),
+                phone=prompt_required("Parent Phone"),
+            )
         manager.add_student(student)
         console.print("[green]Student added successfully.[/green]")
     except (KeyError, ValueError, RuntimeError) as error:
@@ -242,6 +272,78 @@ def grades_attendance_flow(manager: StudentManager) -> None:
             pause()
 
 
+def parents_flow(manager: StudentManager) -> None:
+    student_id: str | None = None
+    student: Student | None = None
+    while True:
+        title = "PARENTS / GUARDIANS"
+        if student:
+            title = f"PARENTS FOR {student.name} ({student.student_id})"
+        print_header(title)
+        console.print("1. [bold]Find Student by ID[/bold]")
+        console.print("2. [bold]View Parents[/bold]")
+        console.print("3. [bold]Add Parent[/bold]")
+        console.print("4. [bold]Remove Parent[/bold]")
+        console.print("5. [bold]Back[/bold]")
+        choice = Prompt.ask("Choose an option", choices=["1", "2", "3", "4", "5"])
+        try:
+            if choice == "1":
+                student_id = prompt_required("Student ID")
+                student = manager.get_student(student_id)
+                console.print(f"[green]Selected {student.name}.[/green]")
+                display_parents(list(student.parents))
+                pause()
+            elif choice == "2":
+                if not student:
+                    console.print("[yellow]Select a student first.[/yellow]")
+                    pause()
+                    continue
+                display_parents(list(student.parents))
+                pause()
+            elif choice == "3":
+                if not student or not student_id:
+                    console.print("[yellow]Select a student first.[/yellow]")
+                    pause()
+                    continue
+                manager.add_parent(
+                    student_id=student_id,
+                    name=prompt_required("Parent Name"),
+                    relationship=prompt_choice(
+                        "Relationship",
+                        ALLOWED_PARENT_RELATIONSHIPS,
+                    ),
+                    email=prompt_required("Parent Email"),
+                    phone=prompt_required("Parent Phone"),
+                )
+                student = manager.get_student(student_id)
+                console.print("[green]Parent added successfully.[/green]")
+                pause()
+            elif choice == "4":
+                if not student or not student_id:
+                    console.print("[yellow]Select a student first.[/yellow]")
+                    pause()
+                    continue
+                parents = list(student.parents)
+                if not parents:
+                    console.print("[yellow]No parents to remove.[/yellow]")
+                    pause()
+                    continue
+                display_parents(parents)
+                selection = Prompt.ask(
+                    "Select parent number",
+                    choices=[str(i) for i in range(1, len(parents) + 1)],
+                )
+                removed = manager.remove_parent(student_id, int(selection) - 1)
+                student = manager.get_student(student_id)
+                console.print(f"[green]Removed {removed.name}.[/green]")
+                pause()
+            elif choice == "5":
+                return
+        except (KeyError, ValueError, RuntimeError) as error:
+            console.print(f"[red]Parent operation failed: {error}[/red]")
+            pause()
+
+
 def reports_flow(manager: StudentManager) -> None:
     while True:
         print_header("REPORTS")
@@ -322,10 +424,11 @@ def run_cli(data_path: str = DEFAULT_DATA_PATH) -> None:
         console.print("4. [bold]Update Student[/bold]")
         console.print("5. [bold]Delete Student[/bold]")
         console.print("6. [bold]Grades & Attendance[/bold]")
-        console.print("7. [bold]Reports[/bold]")
-        console.print("8. [bold]Save / Export Data[/bold]")
-        console.print("9. [bold]Exit[/bold]")
-        choice = Prompt.ask("Choose an option", choices=[str(i) for i in range(1, 10)])
+        console.print("7. [bold]Parents / Guardians[/bold]")
+        console.print("8. [bold]Reports[/bold]")
+        console.print("9. [bold]Save / Export Data[/bold]")
+        console.print("10. [bold]Exit[/bold]")
+        choice = Prompt.ask("Choose an option", choices=[str(i) for i in range(1, 11)])
 
         if choice == "1":
             add_student_flow(manager)
@@ -345,9 +448,11 @@ def run_cli(data_path: str = DEFAULT_DATA_PATH) -> None:
         elif choice == "6":
             grades_attendance_flow(manager)
         elif choice == "7":
-            reports_flow(manager)
+            parents_flow(manager)
         elif choice == "8":
-            save_export_flow(manager)
+            reports_flow(manager)
         elif choice == "9":
+            save_export_flow(manager)
+        elif choice == "10":
             console.print("[bold blue]Goodbye![/bold blue]")
             return

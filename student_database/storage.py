@@ -47,11 +47,21 @@ def export_students_csv(students: Iterable[Student], file_path: str) -> None:
         "attendance_percentage",
         "status",
         "category",
+        "parent_names",
+        "parent_relationships",
+        "parent_emails",
+        "parent_phones",
     ]
     with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=headers)
         writer.writeheader()
         for student in students:
+            parent_names = "; ".join(map(lambda parent: parent.name, student.parents))
+            parent_relationships = "; ".join(
+                map(lambda parent: parent.relationship, student.parents)
+            )
+            parent_emails = "; ".join(map(lambda parent: parent.email, student.parents))
+            parent_phones = "; ".join(map(lambda parent: parent.phone, student.parents))
             writer.writerow(
                 {
                     "student_id": student.student_id,
@@ -65,5 +75,9 @@ def export_students_csv(students: Iterable[Student], file_path: str) -> None:
                     ),
                     "status": student.status,
                     "category": student.student_category(),
+                    "parent_names": parent_names,
+                    "parent_relationships": parent_relationships,
+                    "parent_emails": parent_emails,
+                    "parent_phones": parent_phones,
                 }
             )
