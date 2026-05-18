@@ -3,18 +3,22 @@
 This document maps the project requirements and rubric to the specific implementation within the Student Database System.
 
 ## 1. Foundation and Logic
-- **Requirement**: Use of numbered menus, conditionals, loops, and robust input handling.
+- **Requirement**: Use of user-friendly controls, numbered menus, conditionals,
+  loops, and robust input handling.
 - **Implementation**:
-    - **Location**: `student_database/cli.py`
-    - **Example**: The `run_cli()` function contains the main `while True` loop and `if/elif` blocks for menu navigation. `Prompt.ask` and `Confirm.ask` from the `rich` library ensure robust input.
+    - **Locations**: `student_database/webapp.py`, `student_database/cli.py`, and `main.py`
+    - **Example**: `main.py` chooses between the browser GUI and CLI. The CLI
+      uses a `while True` loop and `if/elif` menu navigation, while the browser
+      GUI exposes the same operations through forms, buttons, dropdowns, and
+      local API routes.
 - **Snippet**:
 ```python
-while True:
-    print_header()
-    # ... menu printing ...
-    choice = Prompt.ask("Choose an option", choices=[str(i) for i in range(1, 10)])
-    if choice == "1":
-        add_student_flow(manager)
+if args.gui:
+    from student_database.webapp import run_web_app
+    run_web_app(data_path=args.data_path, host=args.host, port=args.port)
+else:
+    from student_database.cli import run_cli
+    run_cli(args.data_path)
 ```
 
 ## 2. Collections
@@ -78,8 +82,13 @@ def iter_students_by_status(self, status: str):
 ## 8. Data Persistence
 - **Requirement**: Save and load data using `json` and `csv`.
 - **Implementation**:
-    - **Location**: `student_database/storage.py` and `student_database/manager.py`
-    - **Details**: `save_students_json` and `load_students_json` handle JSON serialization. `StudentManager` now includes an `_auto_save()` method that automatically triggers a JSON save after any data modification (Add, Update, Delete, Grade, Attendance).
+    - **Location**: `student_database/storage.py`, `student_database/manager.py`, `student_database/cli.py`, and `student_database/webapp.py`
+    - **Details**: `save_students_json` and `load_students_json` handle JSON
+      serialization. `export_students_csv` creates CSV exports. `StudentManager`
+      includes an `_auto_save()` method that automatically triggers a JSON save
+      after any data modification (Add, Update, Delete, Grade, Attendance, and
+      Parent updates). Both the CLI and browser GUI expose save, load, and CSV
+      export actions.
 - **Snippet**:
 ```python
 def _auto_save(self) -> None:
@@ -91,4 +100,17 @@ def _auto_save(self) -> None:
 - **Requirement**: Include at least five `unittest` tests.
 - **Implementation**:
     - **Location**: `tests/test_student_database.py`
-    - **Details**: Contains a suite of tests for `StudentManager`, validation logic, and models, ensuring system reliability.
+    - **Details**: Contains 13 tests for `StudentManager`, validation logic,
+      models, reports, JSON persistence, CSV export, parents, GPA, and
+      attendance behavior.
+
+## 10. User-Friendly Interface
+- **Requirement**: Provide a user-friendly interface with the same commands and
+  functionality as the CLI.
+- **Implementation**:
+    - **Location**: `student_database/webapp.py`
+    - **Details**: The browser GUI runs locally with Python's standard
+      `http.server` stack and calls the same `StudentManager` methods as the
+      CLI. It supports viewing, searching, filtering, adding, updating,
+      deleting, grades, attendance, parents, reports, JSON save/load, and CSV
+      export.

@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Run either the CLI or the graphical interface."""
+    """Run either the CLI or the browser interface."""
     args = parse_args()
     if args.gui:
         from student_database.webapp import run_web_app

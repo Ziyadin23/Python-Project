@@ -69,8 +69,24 @@ def students_at_risk(self, minimum_attendance: float = 75.0):
 
 ---
 
-## Speaker 3: User Interface & Saving Data
-*(Focuses on `validation.py` and `storage.py`)*
+## Speaker 3: User Interface, Validation & Saving Data
+*(Focuses on `webapp.py`, `validation.py`, `storage.py`, and `manager.py`)*
+
+**What to say:**
+"I worked on making the system easier to use. The original terminal menu still
+works, but I also added a local browser interface. It has the same features as
+the CLI: students, search, update, grades, attendance, parents, reports, JSON
+save/load, and CSV export."
+
+**Code Example to show:** *(Location: `main.py`)*
+```python
+if args.gui:
+    from student_database.webapp import run_web_app
+    run_web_app(args.data_path)
+else:
+    from student_database.cli import run_cli
+    run_cli(args.data_path)
+```
 
 **What to say:**
 "I focused on user input and saving the data. To make sure users don't type bad data, I used Regular Expressions (Regex) to strictly check emails and phone numbers."
@@ -98,3 +114,8 @@ def _auto_save(self) -> None:
             self.load_json(self.data_path)
             raise RuntimeError(f"Auto-save failed. Changes reverted. ({error})")
 ```
+
+**What to say:**
+"For sharing data outside the app, the Save / Export screen can export all
+student summaries to CSV, so the file can be opened in Excel, Google Sheets, or
+LibreOffice."
