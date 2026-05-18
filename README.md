@@ -17,7 +17,12 @@ of the system while the final application still runs as one integrated program.
    pip install -r requirements.txt
    ```
 
-2. Start the application:
+2. Start the browser interface:
+   ```bash
+   python main.py --gui
+   ```
+
+   Or start the original terminal interface:
    ```bash
    python main.py
    ```
@@ -30,6 +35,8 @@ of the system while the final application still runs as one integrated program.
 ## Main Features
 
 - **Modern Terminal UI**: Colorful and intuitive menus, panels, and tables using the `rich` library.
+- **Browser GUI**: A local web interface with the same student, parent, grade,
+  attendance, report, save, load, and export operations as the CLI.
 - **Robust Auto-Save**: Every change is automatically saved to JSON, with fail-safes to prevent data corruption.
 - **Full Student Management**: Add, view, search, and selectively update specific student records.
 - **Rich Student Profiles**: Store IDs, contact info, academic status, grades, and attendance.
