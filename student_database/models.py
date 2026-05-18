@@ -18,7 +18,7 @@ from student_database.validation import (
     validate_year_level,
 )
 
-
+"""Class person"""
 class Person:
     """Base class for people in the system."""
 
